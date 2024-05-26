@@ -35,8 +35,7 @@ func (m *Repository)Counter(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "method not allowed"})
 	}
 	counterService := &services.CounterService{}
-	count := counterService.Counter()
-	err := counterService.SaveRequests(m.App.FilePath)
+	count, err := counterService.Counter(m.App.FilePath)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "internal server error"})
