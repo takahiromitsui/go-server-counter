@@ -2,6 +2,8 @@ package services
 
 import (
 	"encoding/gob"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -14,9 +16,13 @@ type CounterService struct {}
 func (c *CounterService) Counter(f string) (int, error){
 	now := time.Now()
 	cutoff := now.Add(-60 * time.Second)
+	requests, err := c.loadRequests(f)
+	if err != nil {
+		return 0, err
+	}
 
 	count := 1
-	var requests []time.Time
+	// var requests []time.Time
 	file, err := os.OpenFile(f, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		log.Println("Error opening file:", err)
@@ -40,7 +46,7 @@ if err != nil {
 	}
 	// overwrite the file with the updated requests slice
 	requests = append(requests, now)
-	// fmt.Println(requests)
+	fmt.Println(requests)
 
 	// Truncate the file and move the file pointer to the beginning of the file
 	err = file.Truncate(0)
@@ -64,36 +70,21 @@ if err != nil {
 }
 
 
-// SaveRequests saves the requests slice to a file.
-// func (c *CounterService) SaveRequests(f string) error{
-// 	file, err := os.OpenFile(f, os.O_WRONLY|os.O_CREATE, 0666)
-// 	if err != nil {
-// 		log.Println("Error opening file:", err)
-// 		return err
-// 	}
-// 	err = gob.NewEncoder(file).Encode(requests)
-// 	fmt.Println(requests)
-// 	if err != nil {
-// 		log.Println("Error encoding requests:", err)
-// 		return err
-// 	}
-// 	return nil
-// }
+// loadRequests loads the requests from the file.
+func (c *CounterService) loadRequests(f string) ([]time.Time, error) {
+	var requests []time.Time
+	file, err := os.OpenFile(f, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+			log.Println("Error opening file:", err)
+			return nil, err
+	}
+	defer file.Close()
 
-// LoadRequests loads the requests slice from a file.
-// func (c *CounterService) LoadRequests(f string) ([]time.Time, error){
-// 	file, err := os.Open(f)
-// 	if err != nil {
-// 		log.Println("Error opening file:", err)
-// 		return nil, err
-// 	}
+	err = gob.NewDecoder(file).Decode(&requests)
+	if err != nil && err != io.EOF {
+			log.Println("Error decoding requests:", err)
+			return nil, err
+	}
 
-// 	defer file.Close()
-
-// 	err = gob.NewDecoder(file).Decode(&requests)
-// 	if err != nil {
-// 		log.Println("Error decoding requests:", err)
-// 		return nil, err
-// 	}
-// 	return requests, nil
-// }
+	return requests, nil
+}
