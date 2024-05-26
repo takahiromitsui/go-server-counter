@@ -1,25 +1,32 @@
 package handlers
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
-	"time"
+
+	"github.com/takahiromitsui/go-server-counter/internal/services"
 )
 
-var (
-	requests []time.Time
-)
+type CounterResponse struct {
+	Count int `json:"count"`
+}
 
 func Counter(w http.ResponseWriter, r *http.Request) {
-	now := time.Now()
-	requests = append(requests, now)
-	cutoff := now.Add(-60 * time.Second)
-
-	count := 0
-	for _, req := range requests {
-		if req.After(cutoff) {
-			count++
-		}
+	if r.Method != "GET" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "method not allowed"})
 	}
-	fmt.Fprintf(w, "Number of requests in the last 60 seconds: %d\n", count)
+	counterService := &services.CounterService{}
+	count := counterService.Counter()
+	w.Header().Set("Content-Type", "application/json")
+	resp := CounterResponse{Count: count}
+	out, err := json.Marshal(resp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "internal server error"})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
 }
