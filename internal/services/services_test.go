@@ -59,6 +59,7 @@ func TestCountRequests(t *testing.T) {
     if count != 1 {
         t.Errorf("Expected count to be 1, got %d", count)
     }
+		// Test that countRequests returns the correct count
 		count = cs.countRequests([]time.Time{time.Now(), time.Now().Add(-50 * time.Second)}, time.Now().Add(-60 * time.Second))
 		if count != 2 {
 				t.Errorf("Expected count to be 2, got %d", count)
