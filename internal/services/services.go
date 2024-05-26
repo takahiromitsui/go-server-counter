@@ -21,7 +21,7 @@ func (c *CounterService) Counter(f string) (int, error){
 			return 0, err
 	}
 
-	count := c.countRequests(requests, cutoff)
+	count := c.countRequests(requests, cutoff) // before appending the current request
 
 	requests = append(requests, now)
 	err = c.saveRequests(f, requests)
@@ -29,7 +29,7 @@ func (c *CounterService) Counter(f string) (int, error){
 			return 0, err
 	}
 
-	return count, nil
+	return count+1, nil
 }
 
 
@@ -83,7 +83,7 @@ func (c *CounterService) saveRequests(f string, requests []time.Time) error {
 
 // countRequests counts the number of requests made after the cutoff time.
 func (c *CounterService) countRequests(requests []time.Time, cutoff time.Time) int {
-    count := 1
+    count := 0
     for _, req := range requests {
         if req.After(cutoff) {
             count++
