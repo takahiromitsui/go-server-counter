@@ -19,6 +19,7 @@ func Counter(w http.ResponseWriter, r *http.Request) {
 	}
 	counterService := &services.CounterService{}
 	count := counterService.Counter()
+	counterService.SaveRequests()
 	w.Header().Set("Content-Type", "application/json")
 	resp := CounterResponse{Count: count}
 	out, err := json.Marshal(resp)
