@@ -4,14 +4,31 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/takahiromitsui/go-server-counter/internal/config"
 	"github.com/takahiromitsui/go-server-counter/internal/services"
 )
+
+type Repository struct {
+	App *config.AppConfig
+}
+
+var Repo *Repository
+
+// NewRepo creates a new Repository.
+func NewRepo(a *config.AppConfig) *Repository {
+	return &Repository{App: a}
+}
+
+// NewHandlers sets the repository for the handlers
+func NewHandlers(r *Repository) {
+	Repo = r
+}
 
 type CounterResponse struct {
 	Count int `json:"count"`
 }
 
-func Counter(w http.ResponseWriter, r *http.Request) {
+func (m *Repository)Counter(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -19,7 +36,7 @@ func Counter(w http.ResponseWriter, r *http.Request) {
 	}
 	counterService := &services.CounterService{}
 	count := counterService.Counter()
-	err := counterService.SaveRequests()
+	err := counterService.SaveRequests(m.App.FilePath)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "internal server error"})

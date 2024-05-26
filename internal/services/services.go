@@ -12,7 +12,6 @@ type CounterService struct {}
 
 var (
 	requests []time.Time
-	persistenceFile = "requests.gob"
 )
 
 // Counter returns the number of requests made in the last 60 seconds.
@@ -31,13 +30,12 @@ func (c *CounterService) Counter() int{
 }
 
 // SaveRequests saves the requests slice to a file.
-func (c *CounterService) SaveRequests() error{
-	file, err := os.Create(persistenceFile)
+func (c *CounterService) SaveRequests(f string) error{
+	file, err := os.OpenFile(f, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		log.Println("Error creating file:", err)
+		log.Println("Error opening file:", err)
 		return err
 	}
-	defer file.Close()
 	err = gob.NewEncoder(file).Encode(requests)
 	if err != nil {
 		log.Println("Error encoding requests:", err)

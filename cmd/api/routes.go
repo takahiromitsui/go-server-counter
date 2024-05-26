@@ -8,6 +8,6 @@ import (
 
 func routes() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc(("GET /counter"), handlers.Counter)
+	mux.HandleFunc(("GET /counter"), handlers.Repo.Counter)
 	return mux
 }
