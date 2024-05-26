@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/gob"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -31,9 +30,9 @@ if err != nil {
 			log.Println("Error encoding requests:", err)
 			return 0, err
 		}
+		return 1, nil
 }
 	defer file.Close()
-	fmt.Println(requests)
 	for _, req := range requests {
 		if req.After(cutoff) {
 			count++
@@ -41,6 +40,7 @@ if err != nil {
 	}
 	// overwrite the file with the updated requests slice
 	requests = append(requests, now)
+	// fmt.Println(requests)
 
 	// Truncate the file and move the file pointer to the beginning of the file
 	err = file.Truncate(0)
