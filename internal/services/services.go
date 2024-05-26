@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/gob"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -16,53 +15,17 @@ type CounterService struct {}
 func (c *CounterService) Counter(f string) (int, error){
 	now := time.Now()
 	cutoff := now.Add(-60 * time.Second)
+
 	requests, err := c.loadRequests(f)
 	if err != nil {
-		return 0, err
+			return 0, err
 	}
 
-	count := 1
-	// var requests []time.Time
-	file, err := os.OpenFile(f, os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		log.Println("Error opening file:", err)
-		return 0, err
-}
-err = gob.NewDecoder(file).Decode(&requests)
-if err != nil {
-		requests = append(requests, now)
-		err = gob.NewEncoder(file).Encode(requests)
-		if err != nil {
-			log.Println("Error encoding requests:", err)
-			return 0, err
-		}
-		return 1, nil
-}
-	defer file.Close()
-	for _, req := range requests {
-		if req.After(cutoff) {
-			count++
-		}
-	}
-	// overwrite the file with the updated requests slice
+	count := c.countRequests(requests, cutoff)
+
 	requests = append(requests, now)
-	fmt.Println(requests)
-
-	// Truncate the file and move the file pointer to the beginning of the file
-	err = file.Truncate(0)
+	err = c.saveRequests(f, requests)
 	if err != nil {
-			log.Println("Error truncating file:", err)
-			return 0, err
-	}
-	_, err = file.Seek(0, 0)
-	if err != nil {
-			log.Println("Error seeking file:", err)
-			return 0, err
-	}
-
-	err = gob.NewEncoder(file).Encode(requests)
-	if err != nil {
-			log.Println("Error encoding requests:", err)
 			return 0, err
 	}
 
@@ -87,4 +50,44 @@ func (c *CounterService) loadRequests(f string) ([]time.Time, error) {
 	}
 
 	return requests, nil
+}
+
+// saveRequests saves the requests to the file.
+func (c *CounterService) saveRequests(f string, requests []time.Time) error {
+    file, err := os.OpenFile(f, os.O_RDWR|os.O_CREATE, 0666)
+    if err != nil {
+        log.Println("Error opening file:", err)
+        return err
+    }
+    defer file.Close()
+
+    err = file.Truncate(0)
+    if err != nil {
+        log.Println("Error truncating file:", err)
+        return err
+    }
+    _, err = file.Seek(0, 0)
+    if err != nil {
+        log.Println("Error seeking file:", err)
+        return err
+    }
+
+    err = gob.NewEncoder(file).Encode(requests)
+    if err != nil {
+        log.Println("Error encoding requests:", err)
+        return err
+    }
+
+    return nil
+}
+
+// countRequests counts the number of requests made after the cutoff time.
+func (c *CounterService) countRequests(requests []time.Time, cutoff time.Time) int {
+    count := 1
+    for _, req := range requests {
+        if req.After(cutoff) {
+            count++
+        }
+    }
+    return count
 }
