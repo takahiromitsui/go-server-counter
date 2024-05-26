@@ -14,19 +14,10 @@ const port = ":8080"
 var app config.AppConfig
 
 func main() {
-	app.FilePath = "requests.gob"
-	repo := handlers.NewRepo(&app)
-	handlers.NewHandlers(repo)
-	file , err := os.Open(app.FilePath)
+	err := run()
 	if err != nil {
-		log.Println("File not found:", err)
-		log.Println("Creating new file...")
-		file, err = os.Create(app.FilePath)
-		if err != nil {
-			log.Println("Error creating file:", err)
-		}
+		log.Fatal(err)
 	}
-	defer file.Close()
 	fmt.Println("Server is running on port", port)
 	srv := &http.Server{
 		Addr: port,
@@ -36,4 +27,22 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func run() error{
+	app.FilePath = "requests.gob"
+	repo := handlers.NewRepo(&app)
+	handlers.NewHandlers(repo)
+	file , err := os.Open(app.FilePath)
+	if err != nil {
+		log.Println("File not found:", err)
+		log.Println("Creating new file...")
+		file, err = os.Create(app.FilePath)
+		if err != nil {
+			log.Fatal("Error creating file:", err)
+			return err
+		}
+	}
+	defer file.Close()
+	return nil
 }
