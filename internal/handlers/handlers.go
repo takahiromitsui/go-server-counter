@@ -19,7 +19,12 @@ func Counter(w http.ResponseWriter, r *http.Request) {
 	}
 	counterService := &services.CounterService{}
 	count := counterService.Counter()
-	counterService.SaveRequests()
+	err := counterService.SaveRequests()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "internal server error"})
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	resp := CounterResponse{Count: count}
 	out, err := json.Marshal(resp)
